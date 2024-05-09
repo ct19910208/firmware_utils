@@ -1,0 +1,47 @@
+include $(AT_SDK_HOME_SH)/tools/mk/function.mk
+# trick for MingW to get /c/ style path. Should be compatible in Linux.
+AT_SDK_HOME	=	${AT_SDK_HOME_SH}
+VERBOSE			=	yes
+DEBUG			=	no
+CHIP			?=	AT1K
+PLATFORM 		= 	evb
+CLUSTER			=	no
+FPU				=	yes
+NPU				=	yes
+COMPUTE			=	yes
+PSRAM           =   yes
+LIB_NAME		=	ansai_zx
+LIB_NAME_UPPER	=	$(call upper, lib$(LIB_NAME))
+LIB_VERSION		=	20231030
+LIB_TARGET_DIR  =	../lib$(LIB_NAME)-$(LIB_VERSION)
+LIB_TARGET		=	$(LIB_TARGET_DIR)/lib$(LIB_NAME).a
+LIB_DIR			=   $(subst $(AT_SDK_HOME_SH),.,$(CURDIR))
+LIB_INCLUES		=	$(addprefix -I,$(call dirs,$(AT_SDK_HOME)/$(LIB_DIR),%.h))
+LIB_SRC		+=	$(subst $(AT_SDK_HOME_SH),,$(call wildcards,$(AT_SDK_HOME_SH)/$(LIB_DIR),%.c))
+LIB_CFLAGS	=
+LIB_OBJS   	= 	$(patsubst %.c, $(BUILDLIBDIR)/%.o, $(LIB_SRC))
+
+LIB_HEADER  += $(LIB_NAME).h
+LIB_NEW_HEADER  += lib$(LIB_HEADER)
+
+CFLAGS 			+=	-D$(LIB_NAME_UPPER)_VER=$(LIB_VERSION)
+
+.PHONY: $(LIB_NAME)_libheader
+
+target_lib:lib $(LIB_NAME)_libheader
+
+$(LIB_NAME)_libheader:
+	@rm $(LIB_TARGET_DIR) -rf
+	@mkdir $(LIB_TARGET_DIR)
+	@cp $(LIB_HEADER) $(LIB_TARGET_DIR)/$(LIB_NEW_HEADER)
+	@cp log_def.h $(LIB_TARGET_DIR)/log_def.h
+
+clean::
+	@rm	$(LIB_TARGET) -f
+	@cd $(LIB_TARGET_DIR);rm $(LIB_NEW_HEADER) -f
+
+show:
+	@echo $(LIB_DIR)
+	@echo $(LIB_COMMON_DIR)
+
+include $(AT_SDK_HOME_SH)/tools/mk/common.mk
